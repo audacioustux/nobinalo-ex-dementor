@@ -1,5 +1,5 @@
 defmodule Nobinalo.Profiles.Profile do
-  use Ecto.Schema
+  use Nobinalo.Schema
   import Ecto.Changeset
 
   @type t :: %__MODULE__{}

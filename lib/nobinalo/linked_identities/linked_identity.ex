@@ -1,5 +1,5 @@
 defmodule Nobinalo.LinkedIdentities.LinkedIdentity do
-  use Ecto.Schema
+  use Nobinalo.Schema
   import Ecto.Changeset
 
   alias Nobinalo.Accounts.Account

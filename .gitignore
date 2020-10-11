@@ -36,3 +36,5 @@ npm-debug.log
 # ignore .env
 .env
 
+# .idea when intellij with elixir plugin used
+/.idea

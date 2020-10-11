@@ -1,8 +1,14 @@
 defmodule Nobinalo.Accounts.Account do
   @moduledoc """
   Models a Account
+
+  handle + ntag combined is unique per user
+  where, ntag (nobinalo tag) is exactly 4 character or grapheme long
+  that is, randomly or user specified tag
+  as, multiple users can have the same handle
+  so, ntag is the discriminator in case of identical handle
   """
-  use Ecto.Schema
+  use Nobinalo.Schema
   import Ecto.Changeset
 
   @type t :: %__MODULE__{}
@@ -14,26 +20,12 @@ defmodule Nobinalo.Accounts.Account do
     LinkedIdentities.LinkedIdentity
   }
 
-  @password_len [min: 8, max: 80]
-  @unusable_password_prefix "!"
-  @unusable_password_suffix_len 15
-  @handle_len [min: 3, max: 24]
-  @handle_format_validators [
-    {~r/^(?![_.])/, ~S["." or "_" not allowed at the beginning]},
-    {~r/(?!.*[_.]{2})/, ~S["__", "_.", "._", ".." are not allowed]},
-    {~r/(?=.*[a-z])/, ~S[at-least one alphabet a-z must be used]},
-    {~r/[a-z0-9._]+/, ~S[only a-z, 0-9 and ".", "_" are allowed]},
-    {~r/(?<![_.])$/, ~S["." or "_" not allowed at the end]}
-  ]
-  @handle_fields ~w[:handle :ntag]a
-
-  @derive {Inspect, except: [:password]}
   @primary_key {:id, :binary_id, read_after_writes: true}
   schema "accounts" do
     field(:handle, :string)
     field(:ntag, :string)
     field(:state, AccountStateEnum, default: :active)
-    field(:password, :string, virtual: true)
+    field(:password, :string, virtual: true, redact: true)
     field(:password_hash, :string)
 
     belongs_to(:successor, __MODULE__, type: :binary_id)
@@ -48,6 +40,33 @@ defmodule Nobinalo.Accounts.Account do
 
     timestamps()
   end
+
+  @password_len [min: 8, max: 80]
+  @unusable_password_prefix "!"
+  @unusable_password_suffix_len 15
+  @handle_len [min: 3, max: 24]
+  @handle_format_validators [
+    {~r/^(?![_.])/, ~S["." or "_" not allowed at the beginning]},
+    {~r/(?!.*[_.]{2})/, ~S["__", "_.", "._", ".." are not allowed]},
+    {~r/(?=.*[a-z])/, ~S[at-least one alphabet a-z must be used]},
+    {~r/[a-z0-9._]+/, ~S[only a-z, 0-9 and ".", "_" are allowed]},
+    {~r/(?<![_.])$/, ~S["." or "_" not allowed at the end]}
+  ]
+  @handle_fields ~w[:handle :ntag]a
+  # filter reserved_words list for valid handle
+  # TODO: use bloom filter (maybe bloomex)
+  @reserved_handles File.read!("priv/dictionaries/reserved_words.json")
+                    |> Jason.decode!()
+                    |> Enum.filter(fn handle ->
+                      Enum.any?(
+                        @handle_format_validators,
+                        fn validator ->
+                          {re, _} = validator
+                          Regex.match?(re, handle)
+                        end
+                      )
+                    end)
+                    |> MapSet.new()
 
   @required_fields ~w[handle password]a
   @spec create_changeset(t, map, :email) :: Changeset.t()
@@ -110,26 +129,10 @@ defmodule Nobinalo.Accounts.Account do
     |> delete_change(:password)
   end
 
-  # filter reserved_words list for valid handle
-  # TODO: use bloom filter (maybe bloomex)
-  @reserved_handles File.read!("priv/dictionaries/reserved_words.json")
-                    |> Jason.decode!()
-                    |> Enum.filter(fn handle ->
-                      Enum.any?(
-                        @handle_format_validators,
-                        fn validator ->
-                          {re, _} = validator
-                          Regex.match?(re, handle)
-                        end
-                      )
-                    end)
-                    |> MapSet.new()
-
   @ntag_many_err_msg ~S[too many users with this handle]
   @spec validate_handle(Changeset.t()) :: Changeset.t()
   defp validate_handle(changeset) do
     changeset
-    |> validate_required(:handle)
     |> validate_length(:handle, @handle_len)
     |> validate_handle_format()
     |> validate_exclusion(:handle, @reserved_handles)
@@ -141,10 +144,12 @@ defmodule Nobinalo.Accounts.Account do
   # TODO: improve ntag generation
   @spec gen_ntag(Changeset.t()) :: Changeset.t()
   defp gen_ntag(changeset) do
+    # generate 4 digit randomly generated number as ntag
+    # 0000..0009 and 9991..9999 reserved for later use
     changeset
     |> put_change(
       :ntag,
-      Enum.random(1..9999)
+      Enum.random(9..9990)
       |> Integer.to_string()
       |> String.pad_leading(4, ["0"])
     )

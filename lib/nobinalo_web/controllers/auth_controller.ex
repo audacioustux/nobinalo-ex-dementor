@@ -20,6 +20,6 @@ defmodule NobinaloWeb.AuthController do
   end
 
   def callback(%{assigns: %{ueberauth_auth: auth}} = conn, _params) do
-    IO.inspect(auth)
+    LinkedIdentities.create_or_update()
   end
 end

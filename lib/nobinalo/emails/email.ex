@@ -1,7 +1,7 @@
 defmodule Nobinalo.Emails.Email do
   @moduledoc false
 
-  use Ecto.Schema
+  use Nobinalo.Schema
   import Ecto.Changeset
 
   @type t :: %__MODULE__{}

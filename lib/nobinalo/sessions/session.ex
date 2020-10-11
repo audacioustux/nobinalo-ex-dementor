@@ -1,5 +1,5 @@
 defmodule Nobinalo.Sessions.Session do
-  use Ecto.Schema
+  use Nobinalo.Schema
   import Ecto.Changeset
 
   schema "sessions" do

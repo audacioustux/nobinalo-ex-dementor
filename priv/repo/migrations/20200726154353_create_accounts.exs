@@ -9,7 +9,9 @@ defmodule Nobinalo.Repo.Migrations.CreateAccounts do
       )
 
       add(:handle, :string, size: 24, null: false)
-      add(:ntag, :string, size: 4, null: false)
+      # emojis takes up more than one codepoints,
+      # should be validated to be exactly 4 graphene long
+      add(:ntag, :string, size: 32, null: false)
       add(:password_hash, :string)
       add(:state, AccountStateEnum.type(), null: false, default: 0)
 
