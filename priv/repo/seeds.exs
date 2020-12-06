@@ -16,5 +16,5 @@ defmodule Nobinalo.Seeds do
 
   alias Nobinalo.Accounts.Account
 
-  @superusers [%{Account{handle: "audacioustux", password: "audacioustux", ntag: []}]
+  @superusers [%{Account{handle: "audacioustux", password: "audacioustux", ntag: "0000"}]
 end

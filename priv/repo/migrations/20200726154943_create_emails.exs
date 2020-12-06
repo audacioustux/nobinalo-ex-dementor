@@ -27,6 +27,8 @@ defmodule Nobinalo.Repo.Migrations.CreateEmails do
            )
 
     # disallow multiple unverified per account
+    # or-else one may insert the same email address multiple times,
+    # accidentally or intentionally
     create unique_index(:emails, :account_id,
              where: "verified_at IS NULL",
              name: "emails_unverified_unique_account_index"

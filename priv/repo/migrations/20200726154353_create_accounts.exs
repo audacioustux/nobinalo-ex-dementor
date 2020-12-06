@@ -8,7 +8,7 @@ defmodule Nobinalo.Repo.Migrations.CreateAccounts do
         default: fragment("uuid_generate_v1mc()")
       )
 
-      add(:handle, :string, size: 24, null: false)
+      add(:username, :string, size: 24, null: false)
       # emojis takes up more than one codepoints,
       # should be validated to be exactly 4 graphene long
       add(:ntag, :string, size: 32, null: false)
